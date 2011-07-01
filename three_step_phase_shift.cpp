@@ -1,23 +1,45 @@
 #include "three_step_phase_shift.h"
+#include <queue>
 
-ThreeStepPhaseShift::ThreeStepPhaseShift(IplImage *imgPhase1, IplImage *imgPhase2, IplImage *imgPhase3) :
-                     imgPhase1(imgPhase1), 
-{}
-
-void ThreeStepPhaseShift::init()
+ThreeStepPhaseShift::ThreeStepPhaseShift(
+          IplImage *imgPhase1
+        , IplImage *imgPhase2
+        , IplImage *imgPhase3)
+    : imgPhase1(imgPhase1),imgPhase2(imgPhase2),imgPhase3(imgPhase3) 
 {
-    /* not needed, we use rgb
-    cvCvtColor(imgPhase1, imgPhase1, CV_RGB2GRAY);
-    cvCvtColor(imgPhase2, imgPhase2, CV_RGB2GRAY);
-    cvCvtColor(imgPhase3, imgPhase3, CV_RGB2GRAY);
-    */
-    // init process array with false
-    // to indicate that no pixel was processed yet
-    
+
+    int width = imgPhase1->width;
+    int height = imgPhase1->height;
+
+    if( width  != imgPhase2->width  ||
+        width  != imgPhase3->width  ||
+        height != imgPhase2->height ||  
+        height != imgPhase3->height ) {
+        throw "invalid arguments: input images must have same dimension!";
+    }
+
+    // initilize matrices
+    imgColor        = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_8U,3);
+    imgWrappedPhase = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_32F,1);
+    mask            = new bool[width*height];
+    process         = new bool[width*height];
+
+    noiseThreshold = 0.1;
 }
 
+// dtor
+ThreeStepPhaseShift::~ThreeStepPhaseShift() {
 
-void ThreeStepPhaseShift:phaseUnwrap() 
+    cvReleaseImage(&imgPhase1);
+    cvReleaseImage(&imgPhase2);
+    cvReleaseImage(&imgPhase3);
+    cvReleaseImage(&imgColor);
+    cvReleaseImage(&imgWrappedPhase);
+    delete mask;
+    delete process;
+}
+
+void ThreeStepPhaseShift::phaseUnwrap() 
 {
     int width = imgPhase1->width;
     int height = imgPhase1->height;
@@ -26,7 +48,6 @@ void ThreeStepPhaseShift:phaseUnwrap()
     uchar* ptrPhase1 = (uchar *)imgPhase1->imageData;
     uchar* ptrPhase2 = (uchar *)imgPhase2->imageData;
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
-
 
 }
 
@@ -46,59 +67,48 @@ void ThreeStepPhaseShift::phaseWrap()
 
     int idx;
     
-    int color1[3];
-    int color2[3];
-    int color3[3];
+    float phi1;
+    float phi2;
+    float phi3;
 
-    float phase1;
-    float phase2;
-    float phase3;
-
-    float phaseSum;
-    float phaseRange;
-    float phaseMax;
-    float phaseMin;
+    float phiSum;
+    float phiRange;
+    float phiMax;
+    float phiMin;
 
     float gamma;
     float twoPi = M_PI * 2;
 
-    for (int i = 0; i<height; i++) 
-    {
-        for (int j = 0; j<width; j++)
-        {
+    for (int i = 0; i<height; i++) {
+        for (int j = 0; j<width; j++) {
+
             idx = i*step+j;
 
-
-            // get rgb intensity by adding b+r+g channels and dividing by 3
-            // this returns a value between 0 and 255,
-            phase1 = luminance(ptrPhase1+idx);         
-            phase2 = luminance(ptrPhase2+idx);         
-            phase3 = luminance(ptrPhase3+idx);         
+            // get intensity of each (rgb) phi image
+            phi1 = luminance(ptrPhase1+idx);         
+            phi2 = luminance(ptrPhase2+idx);         
+            phi3 = luminance(ptrPhase3+idx);         
     
-            phaseSum = phase1 + phase2 + phase3;
+            phiSum = phi1 + phi2 + phi3;
             
-            phaseMax = max(phase1,phase2,phase3);
-            phaseMin = min(phase1,phase2,phase3);
+            phiMax = max_phase(phi1,phi2,phi3);
+            phiMin = min_phase(phi1,phi2,phi3);
             
-            phaseRange = phaseMax - phaseMin;
+            phiRange = phiMax - phiMin;
 
             // noise ignoration
-            gamma = phaseRange / phaseSum;
-            mask[i][j] = gamma < noiseThreshold;
-            process[i][j] != mask[i][j];
+            gamma = phiRange / phiSum;
+            mask[idx] = gamma < noiseThreshold;
+            process[idx] != mask[idx];
 
-            // phase calculation
-            phase[idx] = atan2(sqrt3 * (phase1 - phase3), 2*phase2 - phase1 - phase3) / twoPi;
-
-            // get color channels from imgPhase1-3
+            // phi calculation
+            ptrWrappedPhase[idx] = atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
 
             // put lightest color in colors-array
-            switch(phaseMax) {
-                case phase1: copy_channels(ptrColor+idx,ptrPhase1+idx);
-                case phase2: copy_channels(ptrColor+idx,ptrPhase2+idx);
-                case phase3: copy_channels(ptrColor+idx,ptrPhase3+idx);
-                default: break;
-            }
+            if(phiMax==phi1) copy_channels(ptrColor+idx,ptrPhase1+idx);
+            else if(phiMax==phi2) copy_channels(ptrColor+idx,ptrPhase2+idx);
+            else if(phiMax==phi3) copy_channels(ptrColor+idx,ptrPhase3+idx);
         }
     }
 }
+

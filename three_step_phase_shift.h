@@ -9,55 +9,60 @@
 class ThreeStepPhaseShift {
 
 public:
-    ThreeStepPhaseShift(IplImage *imgPhase1, IplImage *imgPhase2, IplImage *imgPhase3) :
-                     imgPhase1(imgPhase1),imgPhase2(imgPhase2),imgPhase3(imgPhase3) 
-    {
 
-        int width = imgPhase1->width;
-        int height = imgPhase1->height;
+    ThreeStepPhaseShift(
+          IplImage *imgPhase1
+        , IplImage *imgPhase2
+        , IplImage *imgPhase3
+        );
 
-        if( width  != imgPhase2->width  ||
-            width  != imgPhase3->width  ||
-            height != imgPhase2->height ||  
-            height != imgPhase3->height ) {
-            throw "invalid arguments: input images must have same dimension!";
-        }
-
-        // initilize matrices
-        imgColor        = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_8U,3);
-        imgWrappedPhase = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_32F,1);
-        mask            = cvCreateMat(height,width,CV_8U);
-        process         = cvCreateMat(height,width,CV_8U);
-
-        noiseThreshold = 0.1;
-    }
-
+    ~ThreeStepPhaseShift();
+ 
     void phaseWrap();
-    void phaseUnWrap();
+    void phaseUnwrap();
 
-private:
+protected:
 
-    inline uchar max(uchar v1, uchar v2, uchar v3) {
-        uchar max = v1>v2 ? v1: v2;
+    struct WrappedPixel {
+        int x;
+        int y;
+        int phi;
+        int r;   // phase distance
+
+        WrappedPixel(int x, int y, int phi, int r):
+            x(x),y(y),phi(phi),r(r)
+        {}
+
+        bool operator<(const WrappedPixel & p) {return r<p.r;}
+        bool operator>(const WrappedPixel & p) {return r>p.r;}
+        bool operator==(const WrappedPixel & p) {return r==p.r;}
+
+    };
+
+
+    // inline helper functions
+    uchar max_phase(uchar v1, uchar v2, uchar v3) {
+        uchar max;
+        max = v1>v2 ? v1 : v2;
         max = max>v3 ? max : v3;
         return max;
     }
 
-    inline uchar min(uchar v1, uchar v2, uchar v3) {
+    uchar min_phase(uchar v1, uchar v2, uchar v3) {
         uchar max = v1<v2 ? v1 : v2;
         max = max<v2 ? max : v3;
         return max;
     }
 
     /* use mean as luminance of an rgb triple */
-    inline uchar luminance(uchar *color) {
-        return (color[0]+color[1]+color[2])/3;
-    }
+    float luminance(uchar *color) {return (color[0]+color[1]+color[2])/(3.f*255);}
 
-    inline void copy_channels(uchar *dest, uchar *src) {
+    void copy_channels(uchar *dest, uchar *src) {
         for(int i=0;i<3;i++)
             *(dest++) = *(src++);
     } 
+
+private:
 
     IplImage* imgPhase1;
     IplImage* imgPhase2;
@@ -66,11 +71,11 @@ private:
     IplImage* imgWrappedPhase;
 
     // some helper matrices to track phase quality and
-    // processing state
-    CvMat *mask;
-    CvMat *process;
+    // processing state (each from the same dimension as the input image)
+    bool *mask;
+    bool *process;
 
     float noiseThreshold;
-}
+};
 
 #endif
