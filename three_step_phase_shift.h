@@ -38,13 +38,13 @@ public:
 private:
 
     inline uchar max(uchar v1, uchar v2, uchar v3) {
-        max = v1>v2 ? v1: v2;
+        uchar max = v1>v2 ? v1: v2;
         max = max>v3 ? max : v3;
         return max;
     }
 
     inline uchar min(uchar v1, uchar v2, uchar v3) {
-        max = v1<v2 ? v1 : v2;
+        uchar max = v1<v2 ? v1 : v2;
         max = max<v2 ? max : v3;
         return max;
     }
