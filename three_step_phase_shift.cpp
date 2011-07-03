@@ -183,5 +183,34 @@ void ThreeStepPhaseShift::phaseUnwrap()
     }
 }
 
+void ThreeStepPhaseShift::setZscale(float newZscale) 
+{
+    zscale = newZscale;
+}
 
+void ThreeStepPhaseShift::setZskew(float newZskew)
+{
+    zskew = newZskew;
+}
+
+void ThreeStepPhaseShift::setNoiseThreshold(float newThreshold) 
+{
+    noiseThreshold = newThreshold;
+}
+
+float ThreeStepPhaseShift::getZscale() {
+    return zscale;
+}
+
+float ThreeStepPhaseShift::getZskew() {
+    return zskew;
+}
+
+float ThreeStepPhaseShift::getNoiseThreshold() {
+    return noiseThreshold;
+}
+
+float* ThreeStepPhaseShift::getDepth() {
+    return depth;
+}
 

@@ -37,7 +37,13 @@ public:
  
     void phaseWrap();
     void phaseUnwrap();
-
+    void setZscale(float newZscale);
+    void setZskew(float newZskew);
+    void setNoiseThreshold(float newThreshold);
+    float getZscale();
+    float getZskew();
+    float getNoiseThreshold();
+    float* getDepth();
 protected:
 
     // unwrap at x,y

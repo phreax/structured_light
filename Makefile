@@ -18,6 +18,9 @@ glutExample: glutExample.cpp
 point_cloud: point_cloud.cpp 
 	$(CC) $(INCPATH) $(LIBPATH) $(LDFLAGS) $(CFLAGS) $^ -o $@
 
+three_step_phase_shift: three_step_phase_shift.cpp
+	$(CC) $(INCPATH) $(LIBPATH) $(LDFLAGS) $(CFLAGS) $^ -o $@
+
 .cpp.o:
 	$(CC) $(INCPATH) $(CFLAGS) -c $^ -o $@
 
