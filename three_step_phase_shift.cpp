@@ -6,7 +6,10 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
         , IplImage *imgPhase3): 
     imgPhase1(imgPhase1),
     imgPhase2(imgPhase2),
-    imgPhase3(imgPhase3)
+    imgPhase3(imgPhase3),
+    mask(0),
+    process(0)
+
 {
 
     width = imgPhase1->width;
@@ -18,21 +21,32 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
         throw "invalid arguments: input images must have same dimension!";
     }
 
-    // initilize matrices
     int size = width*height;
     imgColor        = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_8U,3);
+    imgPhase1Gray = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_8U,1);
     imgWrappedPhase = cvCreateImage(cvGetSize(imgPhase1),IPL_DEPTH_32F,1);
-    mask            = new bool[size];
-    process         = new bool[size];
-    distance        = new float[size];
-    depth           = new float[size];
+
+    mask            = new bool [size];
+    process         = new bool [size];
+    distance        = new float [size];
+    depth           = new float [size];
+
+        
+    // initilize matrices
     noiseThreshold = 0.1;
     zscale = 130;
     zskew = 24;
 
     // init step width for color and single channel images
-    step  = width ;
-    step3 = imgPhase1->widthStep;
+    step  = width; 
+
+    cout << "step: " << step << "\nstep3: " << step3 << endl;
+    cout << "width: " << width << "\nheight: " << height << endl;
+    cout << "size " << size << endl;
+    
+    cvShowImage("phase1", imgPhase1);
+    cvWaitKey(1000);
+
 }
 
 // dtor
@@ -59,7 +73,8 @@ void ThreeStepPhaseShift::phaseWrap()
     uchar* ptrPhase2 = (uchar *)imgPhase2->imageData;
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
     uchar* ptrColor  = (uchar *)imgColor->imageData;
-    uchar* ptrWrappedPhase  = (uchar *)imgWrappedPhase->imageData;
+    uchar* ptrGray  = (uchar *)imgPhase1Gray->imageData;
+    float* ptrWrappedPhase  = (float *)imgWrappedPhase->imageData;
 
     int idx;
     
@@ -75,16 +90,23 @@ void ThreeStepPhaseShift::phaseWrap()
     float gamma;
     float twoPi = M_PI * 2;
 
+    int stepc = imgPhase1->widthStep;
+    int stepf = imgWrappedPhase->widthStep/(sizeof(float));
+
+    cout << "stepc " << stepc << "\nstepf " << stepf << endl;
+    cout << "graystep " << imgPhase1Gray->widthStep << endl;
     for (int i = 0; i<height; i++) {
         for (int j = 0; j<width; j++) {
 
             idx = i*step+j;
 
             // get intensity of each (rgb) phi image
-            phi1 = luminance(ptrPhase1+(i*step3+j));         
-            phi2 = luminance(ptrPhase2+(i*step3+j));         
-            phi3 = luminance(ptrPhase3+(i*step3+j));         
-    
+            phi1 =luminance(ptrPhase1+(i*stepc+j*3));         
+            phi2 =luminance(ptrPhase2+(i*stepc+j*3));         
+            phi3 =luminance(ptrPhase3+(i*stepc+j*3));         
+
+            ptrGray[i*imgPhase1Gray->widthStep + j] = phi1*255; 
+
             phiSum = phi1 + phi2 + phi3;
             
             phiMax = max_phase(phi1,phi2,phi3);
@@ -95,17 +117,18 @@ void ThreeStepPhaseShift::phaseWrap()
             // compute phase quality, ignore background pixels,
             // i.e. where the phase range is too low
             gamma = phiRange / phiSum;
-            mask[idx] = gamma < noiseThreshold;
-            process[idx] = !mask[idx];
-            distance[idx] = phiRange;
+//            mask[idx] = true;//(bool) (gamma < noiseThreshold);
+            //process[idx] = !mask[idx];
+            //distance[idx] = phiRange;
 
             // compute phase: phi <- [-1,1]
-            ptrWrappedPhase[idx] = atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
+           
+            ptrWrappedPhase[i*stepf+j] = (float)atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
 
             // user lightest pixel of all phase images as color
-            if(phiMax==phi1) copy_channels(ptrColor+idx,ptrPhase1+idx);
-            else if(phiMax==phi2) copy_channels(ptrColor+idx,ptrPhase2+idx);
-            else if(phiMax==phi3) copy_channels(ptrColor+idx,ptrPhase3+idx);
+            /*if(phiMax==phi1) copy_channels(ptrColor+(i*stepc+j),ptrPhase1+(i*stepc+j));
+            else if(phiMax==phi2) copy_channels(ptrColor+(i*stepc+j),ptrPhase2+(i*stepc+j));
+            else if(phiMax==phi3) copy_channels(ptrColor+(i*stepc+j),ptrPhase3+(i*stepc+j));*/
         }
     }
 }
@@ -113,9 +136,10 @@ void ThreeStepPhaseShift::phaseWrap()
 void ThreeStepPhaseShift::makeDepth () {
     uchar* ptrWrappedPhase = (uchar *)imgWrappedPhase->imageData;
         
-    for(int j=0; j<width; j++) {
-        float planephase = 0.5 - (j - (height/2))/zskew;
-        for(int i = 0; i<height; i++) {
+        
+    for(int i = 0; i<height; i++) {
+        float planephase = 0.5 - (i - (height/2))/zskew;
+        for(int j=0; j<width; j++) {
             int idx = i*step+j;
             if(mask[idx]) {
                 depth[idx] = (ptrWrappedPhase[idx] - planephase) * zscale;
@@ -183,34 +207,5 @@ void ThreeStepPhaseShift::phaseUnwrap()
     }
 }
 
-void ThreeStepPhaseShift::setZscale(float newZscale) 
-{
-    zscale = newZscale;
-}
 
-void ThreeStepPhaseShift::setZskew(float newZskew)
-{
-    zskew = newZskew;
-}
-
-void ThreeStepPhaseShift::setNoiseThreshold(float newThreshold) 
-{
-    noiseThreshold = newThreshold;
-}
-
-float ThreeStepPhaseShift::getZscale() {
-    return zscale;
-}
-
-float ThreeStepPhaseShift::getZskew() {
-    return zskew;
-}
-
-float ThreeStepPhaseShift::getNoiseThreshold() {
-    return noiseThreshold;
-}
-
-float* ThreeStepPhaseShift::getDepth() {
-    return depth;
-}
 

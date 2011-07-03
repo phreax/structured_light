@@ -37,13 +37,20 @@ public:
  
     void phaseWrap();
     void phaseUnwrap();
-    void setZscale(float newZscale);
-    void setZskew(float newZskew);
-    void setNoiseThreshold(float newThreshold);
-    float getZscale();
-    float getZskew();
-    float getNoiseThreshold();
-    float* getDepth();
+    
+    void  setZscale(float _zscale) { zscale = _zscale; }
+    void  setZskew(float _zskew) { zskew = _zskew; }
+    void  setNoiseThreshold(float _threshold) { noiseThreshold = _threshold;}
+    float getZscale() { return zscale; }
+    float getZskew() { return zskew; }
+    float getNoiseThreshold() { return noiseThreshold; }
+    float* getDepth() { return depth; }
+
+    IplImage *getWrappedPhase()  { return imgWrappedPhase; };
+    IplImage *getColorImage()  { return imgColor; };
+
+    IplImage* imgPhase1Gray;
+
 protected:
 
     // unwrap at x,y
@@ -82,8 +89,8 @@ private:
 
     // some helper matrices to track phase quality and
     // processing state (each from the same dimension as the input image)
-    bool *mask;
-    bool *process;
+    bool  *mask;
+    bool  *process;
     float *distance;
     float *depth;
     float noiseThreshold;
