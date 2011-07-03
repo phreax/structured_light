@@ -100,7 +100,7 @@ void ThreeStepPhaseShift::phaseWrap()
             process[idx] = !mask[idx];
             distance[idx] = phiRange;
 
-            // phi calculation
+            // compute phase: phi <- [-1,1]
             ptrWrappedPhase[idx] = atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
 
             // user lightest pixel of all phase images as color
@@ -152,7 +152,6 @@ void ThreeStepPhaseShift::phaseUnwrap()
     uchar* ptrPhase2 = (uchar *)imgPhase2->imageData;
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
     uchar* ptrWrappedPhase = (uchar *)imgWrappedPhase->imageData;
-
 
     std::queue<UnwrapPath> procQueue;
     UnwrapPath  = UnwrapPath(startX, startY, ptrWrappedPhase[startX*step+startY]);
