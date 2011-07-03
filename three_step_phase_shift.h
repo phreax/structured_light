@@ -74,8 +74,11 @@ private:
     // processing state (each from the same dimension as the input image)
     bool *mask;
     bool *process;
-
+    float *distance;
+    float *depth;
     float noiseThreshold;
+    float zscale;
+    float zscew;
 };
 
 #endif
