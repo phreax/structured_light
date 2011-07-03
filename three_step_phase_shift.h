@@ -23,19 +23,21 @@ public:
 
 protected:
 
-    struct WrappedPixel {
+
+    // unwrap at x,y
+    void phaseUnwrap(int x, int y, float phi, queue<UnwrapPath> *procQueue);
+
+    struct UnwrapPath {
         int x;
         int y;
-        int phi;
+        int phi; // last phase 
         int r;   // phase distance
 
-        WrappedPixel(int x, int y, int phi, int r):
+        UnwrapPath(int x, int y, int phi, int r):
             x(x),y(y),phi(phi),r(r)
         {}
 
-        bool operator<(const WrappedPixel & p) {return r<p.r;}
-        bool operator>(const WrappedPixel & p) {return r>p.r;}
-        bool operator==(const WrappedPixel & p) {return r==p.r;}
+        bool operator<(const UnwrapPath & p) {return r<p.r;}
 
     };
 
@@ -79,6 +81,11 @@ private:
     float noiseThreshold;
     float zscale;
     float zscew;
+
+    int width;
+    int height;
+    int step;   // for single channel images
+    int step3; // for 3 channel images
 };
 
 #endif
