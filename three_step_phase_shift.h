@@ -2,9 +2,26 @@
 #include <cv.h>
 #include <highgui.h>
 #include <math.h>
+#include <deque>
 
 #ifndef THREESTEPPHASESHIFT_H
 #define THREESTEPPHASESHIFT_H
+
+using namespace std;
+
+struct UnwrapPath {
+    int x;
+    int y;
+    int phi; // last phase 
+    int r;   // phase distance
+
+    UnwrapPath(int x, int y, int phi):
+        x(x),y(y),phi(phi)
+    {}
+
+    //bool operator<(const UnwrapPath & p) {return r<p.r;}
+
+};
 
 class ThreeStepPhaseShift {
 
@@ -23,24 +40,9 @@ public:
 
 protected:
 
-
     // unwrap at x,y
-    void phaseUnwrap(int x, int y, float phi, queue<UnwrapPath> *procQueue);
-
-    struct UnwrapPath {
-        int x;
-        int y;
-        int phi; // last phase 
-        int r;   // phase distance
-
-        UnwrapPath(int x, int y, int phi, int r):
-            x(x),y(y),phi(phi),r(r)
-        {}
-
-        bool operator<(const UnwrapPath & p) {return r<p.r;}
-
-    };
-
+    void phaseUnwrap(int x, int y, float phi );
+    void makeDepth ();
 
     // inline helper functions
     uchar max_phase(uchar v1, uchar v2, uchar v3) {
@@ -80,12 +82,14 @@ private:
     float *depth;
     float noiseThreshold;
     float zscale;
-    float zscew;
+    float zskew;
 
     int width;
     int height;
     int step;   // for single channel images
     int step3; // for 3 channel images
+
+    deque<UnwrapPath> procQueue;
 };
 
 #endif

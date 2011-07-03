@@ -1,5 +1,4 @@
 #include "three_step_phase_shift.h"
-#include <queue>
 
 ThreeStepPhaseShift::ThreeStepPhaseShift(
           IplImage *imgPhase1
@@ -32,8 +31,8 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
     zskew = 24;
 
     // init step width for color and single channel images
-    step  = width 
-    step3 = imgPhase1->stepWidth;
+    step  = width ;
+    step3 = imgPhase1->widthStep;
 }
 
 // dtor
@@ -126,7 +125,7 @@ void ThreeStepPhaseShift::makeDepth () {
 }
 
 
-void ThreeStepPhaseShift::phaseUnwrap(int x, int y, float phi, queue<UnwrapPath> *procQueue) {
+void ThreeStepPhaseShift::phaseUnwrap(int x, int y, float phi) {
     uchar* ptrWrappedPhase = (uchar *)imgWrappedPhase->imageData;
     
     if(process[x*width+y]) {
@@ -139,7 +138,7 @@ void ThreeStepPhaseShift::phaseUnwrap(int x, int y, float phi, queue<UnwrapPath>
         if ( diff < .5) {
             diff++;
         }
-        procQueue.push(UnwrapPath(x, y, phi+diff));
+        procQueue.push_back(UnwrapPath(x, y, phi+diff));
     }
 }
 
@@ -153,12 +152,13 @@ void ThreeStepPhaseShift::phaseUnwrap()
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
     uchar* ptrWrappedPhase = (uchar *)imgWrappedPhase->imageData;
 
-    std::queue<UnwrapPath> procQueue;
-    UnwrapPath  = UnwrapPath(startX, startY, ptrWrappedPhase[startX*step+startY]);
-    procQueue.push(p);
+    procQueue.clear();
+    UnwrapPath p  = UnwrapPath(startX, startY, ptrWrappedPhase[startX*step+startY]);
+    procQueue.push_back(p);
 
     while(!procQueue.empty()) {
-        UnwrapPath current = procQueue.pop();
+        UnwrapPath current = procQueue.front();
+        procQueue.pop_front();
         int x = current.x;
         int y = current.y;
         if(process[x*step+y]) {
@@ -168,16 +168,16 @@ void ThreeStepPhaseShift::phaseUnwrap()
 
             // follow path in each direction
             if (y > 0) {
-                phaseUnwrap(x, y-1, phi, &procQueue);
+                phaseUnwrap(x, y-1, phi );
             }
             if (y < height-1) {
-                phaseUnwrap(x, y+1, phi, &procQueue);
+                phaseUnwrap(x, y+1, phi);
             }
             if (x > 0) {
-                phaseUnwrap(x-1, y, phi, &procQueue);
+                phaseUnwrap(x-1, y, phi);
             }
             if (x < width - 1) {
-                phaseUnwrap(x+1, y, phi, &procQueue);
+                phaseUnwrap(x+1, y, phi);
             }
         }
     }
