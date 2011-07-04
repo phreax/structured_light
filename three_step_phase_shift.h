@@ -3,6 +3,7 @@
 #include <highgui.h>
 #include <math.h>
 #include <deque>
+#include <queue>
 
 #ifndef THREESTEPPHASESHIFT_H
 #define THREESTEPPHASESHIFT_H
@@ -12,14 +13,18 @@ using namespace std;
 struct UnwrapPath {
     int x;
     int y;
-    float phi; // last phase 
-    //int r;   // phase distance
+    float phi;    // last phase 
+    float dist;   // phase distance
 
     UnwrapPath(int x, int y, float phi):
         x(x),y(y),phi(phi)
     {}
 
-    //bool operator<(const UnwrapPath & p) {return r<p.r;}
+    UnwrapPath(int x, int y, float phi, float dist):
+        x(x),y(y),phi(phi), dist(dist)
+    {}
+    
+    bool operator<(const UnwrapPath & p) const {return dist<p.dist;}
 
 };
 
@@ -35,9 +40,14 @@ public:
 
     ~ThreeStepPhaseShift();
  
-    void phaseWrap();
+    void phaseDecode();
     void phaseUnwrap();
-    
+    void compute() {
+        phaseDecode();
+        phaseUnwrap();
+        computeDepth();
+    }
+
     void  setZscale(float _zscale) { zscale = _zscale; }
     void  setZskew(float _zskew) { zskew = _zskew; }
     void  setNoiseThreshold(float _threshold) { noiseThreshold = _threshold;}
@@ -45,6 +55,7 @@ public:
     float getZskew() { return zskew; }
     float getNoiseThreshold() { return noiseThreshold; }
     float* getDepth() { return depth; }
+    bool* getMask() { return mask; }
 
     IplImage *getWrappedPhase()  { return imgWrappedPhase; };
     IplImage *getUnwrappedPhase()  { return imgUnwrappedPhase; };
@@ -56,7 +67,10 @@ protected:
 
     // unwrap at x,y
     void phaseUnwrap(int x, int y, float phi );
-    void makeDepth ();
+    void phaseUnwrap(int x, int y, float phi, float dist );
+    
+    void computeDepth ();
+    void computeDist();
 
     // inline helper functions
     float max_phase(float v1, float v2, float v3) {
@@ -68,7 +82,7 @@ protected:
 
     float min_phase(float v1, float v2, float v3) {
         float max = v1<v2 ? v1 : v2;
-        max = max<v2 ? max : v3;
+        max = max<v1 ? max : v3;
         return max;
     }
 
@@ -79,6 +93,11 @@ protected:
         for(int i=0;i<3;i++)
             *(dest+i) = *(src+i);
     } 
+
+    float sqdist(float v1, float v2) { 
+        float d = v1-v2;
+        return 1-d*d;
+    }
 
 private:
 
@@ -94,6 +113,7 @@ private:
     bool  *mask;
     bool  *process;
     float *distance;
+    float *range;
     float *depth;
     float noiseThreshold;
     float zscale;
@@ -102,9 +122,9 @@ private:
     int width;
     int height;
     int step;   // for single channel images
-    int step3; // for 3 channel images
 
-    deque<UnwrapPath> procQueue;
+    //deque<UnwrapPath> procQueue;
+    priority_queue<UnwrapPath> processHeap;
 };
 
 #endif

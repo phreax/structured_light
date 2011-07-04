@@ -29,6 +29,14 @@ float printMinMax(IplImage *img) {
     
 }
 
+IplImage *boolarr2img(bool* barr, CvSize s) {
+
+    IplImage *img = cvCreateImageHeader(s,IPL_DEPTH_8U,1);
+    img->imageData = (char *)barr;
+    cvConvertScale(img,img,255);
+    return img;
+}
+
 void scale(IplImage *img) {
     
     int w = img->width;
@@ -90,7 +98,7 @@ int main(int argc, const char *argv[])
 
     ThreeStepPhaseShift decoder(phase1,phase2,phase3);
 
-    decoder.phaseWrap();
+    decoder.phaseDecode();
     IplImage* wrappedPhase = decoder.getWrappedPhase();
     //IplImage* imgColor = decoder.getColorImage();
     printMinMax(wrappedPhase);
@@ -101,8 +109,11 @@ int main(int argc, const char *argv[])
     IplImage* unwrappedPhase = decoder.getUnwrappedPhase();
     scale(unwrappedPhase);
     printMinMax(unwrappedPhase);
+    
     cvShowImage("wrapped phase",wrappedPhase);
     cvShowImage("unwrapped phase",unwrappedPhase);
+    cvShowImage("mask",boolarr2img(decoder.getMask(),cvGetSize(wrappedPhase)));
+    
     //cvShowImage("color image",imgColor);
     
     /*cout << "main():" << __LINE__ << endl;

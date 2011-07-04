@@ -31,21 +31,21 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
     mask            = new bool [size];
     process         = new bool [size];
     distance        = new float [size];
+    range           = new float [size];
     depth           = new float [size];
 
         
     // initilize matrices
-    noiseThreshold = 0.001;
+    noiseThreshold = 0.01;
     zscale = 130;
     zskew = 24;
 
     // init step width for color and single channel images
     step  = width; 
 
-    cout << "step: " << step << "\nstep3: " << step3 << endl;
     cout << "width: " << width << "\nheight: " << height << endl;
     cout << "size " << size << endl;
-    
+
     cvShowImage("phase1", imgPhase1);
     cvWaitKey(1000);
 
@@ -65,7 +65,7 @@ ThreeStepPhaseShift::~ThreeStepPhaseShift() {
     delete[] depth;
 }
 
-void ThreeStepPhaseShift::phaseWrap() 
+void ThreeStepPhaseShift::phaseDecode() 
 {
     // Some initializing and optimization( only the sqrt thing )
     float sqrt3 = sqrt(3);
@@ -89,7 +89,7 @@ void ThreeStepPhaseShift::phaseWrap()
     float phiMax;
     float phiMin;
 
-    float gamma;
+    float noise;
     float twoPi = M_PI * 2;
     int stepc = imgPhase1->widthStep;
 
@@ -115,17 +115,16 @@ void ThreeStepPhaseShift::phaseWrap()
             
             phiRange = phiMax - phiMin;
 
-            // compute phase quality, ignore background pixels,
+            // compute phase quality, try to filter background pixel
             // i.e. where the phase range is too low
-            gamma = phiRange / phiSum;
-            mask[ii] = (gamma < noiseThreshold);
+            noise = phiRange / phiSum;
+            mask[ii] = (noise < noiseThreshold);
             process[ii] = !mask[ii];
-            distance[ii] = phiRange;
+            range[ii] = phiRange;
             
             //compute phase: phi <- [-1,1]
-           
-            ptrWrappedPhase[ii] = (float)atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
-
+            if(!mask[ii]) 
+                ptrWrappedPhase[ii] = (float)atan2(sqrt3 * (phi1 - phi3), 2*phi2 - phi1 - phi3) / twoPi;
 
             // user lightest pixel of all phase images as color
             if(phiMax==phi1) copy_channels(ptrColor+iic,ptrPhase1+iic);
@@ -133,9 +132,11 @@ void ThreeStepPhaseShift::phaseWrap()
             else if(phiMax==phi3) copy_channels(ptrColor+iic,ptrPhase3+iic);
         }
     }
+
+    computeDist();
 }
 
-void ThreeStepPhaseShift::makeDepth () {
+void ThreeStepPhaseShift::computeDepth () {
     float* ptrWrappedPhase = (float *)imgWrappedPhase->imageData;
     
     for(int i = 0; i<height; i++) {
@@ -150,20 +151,23 @@ void ThreeStepPhaseShift::makeDepth () {
 }
 
 
-void ThreeStepPhaseShift::phaseUnwrap(int x, int y, float phi) {
+void ThreeStepPhaseShift::phaseUnwrap(int x, int y, float phi, float dist) {
     float* ptrUnwrappedPhase = (float *)imgUnwrappedPhase->imageData;
     
     if(process[y*step+x]) {
 
         float frac = phi -(int)phi;     // discontinue unwrapped phase
         float diff = ptrUnwrappedPhase[y*step+x] - frac;  // get phase difference
+        dist += distance[y*step+x];
+        float r = range[y*step+x];
         if ( diff > 0.5 ) {
             diff--;
         }
         if ( diff < -0.5) {
             diff++;
         }
-        procQueue.push_back(UnwrapPath(x, y, phi+diff));
+        //procQueue.push_back(UnwrapPath(x, y, phi+diff));
+        processHeap.push(UnwrapPath(x, y, phi+diff, dist));
     }
 }
 
@@ -176,42 +180,64 @@ void ThreeStepPhaseShift::phaseUnwrap()
     uchar* ptrPhase2 = (uchar *)imgPhase2->imageData;
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
 
+    cvNamedWindow("unwrapping");
     
     cvCopy(imgWrappedPhase, imgUnwrappedPhase);
     float* ptrUnwrappedPhase = (float *)imgUnwrappedPhase->imageData;
 
+    UnwrapPath p  = UnwrapPath(startX, startY, ptrUnwrappedPhase[startY*step+startX],0);
+    //procQueue.push_back(p);
+    processHeap.push(p);
 
-    procQueue.clear();
-    UnwrapPath p  = UnwrapPath(startX, startY, ptrUnwrappedPhase[startY*step+startX]);
-    procQueue.push_back(p);
-
-    while(!procQueue.empty()) {
-        UnwrapPath current = procQueue.front();
-        procQueue.pop_front();
+    int i=0;
+    while(!processHeap.empty()) {
+        UnwrapPath current = processHeap.top();
+        processHeap.pop();
         int x = current.x;
         int y = current.y;
+        float d = current.dist;
+
+
+        if(i>20) {
+            cvShowImage("unwrapping",imgUnwrappedPhase);
+            cvWaitKey(1);
+            i=0;
+        }
             
+        i++;
         if(process[y*step+x]) {
             ptrUnwrappedPhase[y*step+x] = current.phi; 
             process[y*width+x] = false;
-        
 
             // follow path in each direction
             if (y > 0) {
-                phaseUnwrap(x, y-1, current.phi );
+                phaseUnwrap(x, y-1, current.phi, d);
             }
             if (y < height-1) {
-                phaseUnwrap(x, y+1, current.phi);
+                phaseUnwrap(x, y+1, current.phi, d);
             }
             if (x > 0) {
-                phaseUnwrap(x-1, y, current.phi);
+                phaseUnwrap(x-1, y, current.phi, d);
             }
             if (x < width - 1) {
-                phaseUnwrap(x+1, y, current.phi);
+                phaseUnwrap(x+1, y, current.phi, d);
             }
         }
     }
 }
 
+void ThreeStepPhaseShift::computeDist() {
 
-
+    uchar *ptrPhase = (uchar *)imgWrappedPhase->imageData;
+    for(int i=1;i<height-1;i++) {
+        for(int j=1;j<width-1;j++) {
+            int ii = i*step+j;
+            float phi = ptrPhase[ii];
+            distance[ii] = sqdist(phi,ptrPhase[ii+1])+
+                           sqdist(phi,ptrPhase[ii-1])+
+                           sqdist(phi,ptrPhase[ii+step])+
+                           sqdist(phi,ptrPhase[ii-step]);
+            distance[ii] /= range[ii];
+        }
+    }
+}
