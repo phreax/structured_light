@@ -12,10 +12,10 @@ using namespace std;
 struct UnwrapPath {
     int x;
     int y;
-    int phi; // last phase 
-    int r;   // phase distance
+    float phi; // last phase 
+    //int r;   // phase distance
 
-    UnwrapPath(int x, int y, int phi):
+    UnwrapPath(int x, int y, float phi):
         x(x),y(y),phi(phi)
     {}
 
@@ -47,6 +47,7 @@ public:
     float* getDepth() { return depth; }
 
     IplImage *getWrappedPhase()  { return imgWrappedPhase; };
+    IplImage *getUnwrappedPhase()  { return imgUnwrappedPhase; };
     IplImage *getColorImage()  { return imgColor; };
 
     IplImage* imgPhase1Gray;
@@ -58,15 +59,15 @@ protected:
     void makeDepth ();
 
     // inline helper functions
-    uchar max_phase(uchar v1, uchar v2, uchar v3) {
-        uchar max;
+    float max_phase(float v1, float v2, float v3) {
+        float max;
         max = v1>v2 ? v1 : v2;
         max = max>v3 ? max : v3;
         return max;
     }
 
-    uchar min_phase(uchar v1, uchar v2, uchar v3) {
-        uchar max = v1<v2 ? v1 : v2;
+    float min_phase(float v1, float v2, float v3) {
+        float max = v1<v2 ? v1 : v2;
         max = max<v2 ? max : v3;
         return max;
     }
@@ -76,7 +77,7 @@ protected:
 
     void copy_channels(uchar *dest, uchar *src) {
         for(int i=0;i<3;i++)
-            *(dest++) = *(src++);
+            *(dest+i) = *(src+i);
     } 
 
 private:
@@ -86,6 +87,7 @@ private:
     IplImage* imgPhase3;
     IplImage* imgColor;  // reconstructed color image 
     IplImage* imgWrappedPhase;
+    IplImage* imgUnwrappedPhase;
 
     // some helper matrices to track phase quality and
     // processing state (each from the same dimension as the input image)
