@@ -104,30 +104,23 @@ int main(int argc, const char *argv[])
     printMinMax(wrappedPhase);
     //cvScale(wrappedPhase, wrappedPhase, 1, 0.5); 
     
-    decoder.phaseUnwrap();
+    decoder.compute();
     
     IplImage* unwrappedPhase = decoder.getUnwrappedPhase();
-    scale(unwrappedPhase);
-    printMinMax(unwrappedPhase);
+    //scale(unwrappedPhase);
+    //printMinMax(unwrappedPhase);
     
-    cvShowImage("wrapped phase",wrappedPhase);
-    cvShowImage("unwrapped phase",unwrappedPhase);
-    cvShowImage("mask",boolarr2img(decoder.getMask(),cvGetSize(wrappedPhase)));
-    
-    //cvShowImage("color image",imgColor);
-    
-    /*cout << "main():" << __LINE__ << endl;
+    IplImage *imgDepth = cvCreateImageHeader(cvGetSize(unwrappedPhase),IPL_DEPTH_32F,1);
+    imgDepth->imageData = (char *)decoder.getDepth();
+    scale(imgDepth);
+    printMinMax(imgDepth);
+    //printMinMax(unwrappedPhase);
 
+    cvShowImage("depth",imgDepth);
+    //cvShowImage("wrapped phase",wrappedPhase);
+    //cvShowImage("unwrapped phase",unwrappedPhase);
+    //cvShowImage("mask",boolarr2img(decoder.getMask(),cvGetSize(wrappedPhase)));
     
-    cout << "main():" << __LINE__ << endl;
-
-    // scale image to 0..255
-    printMinMax(wrappedPhase);
-    cvNamedWindow("wrapped phase");
-    cvShowImage("phase1", phase1);
-    cvShowImage("phase1 gray",decoder.imgPhase1Gray);
-*/
-    cvShowImage("phase1", phase1);
     cvWaitKey(0);
 
     return 0;

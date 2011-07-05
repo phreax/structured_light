@@ -1,5 +1,4 @@
 #include "glpointcloud.h"
-#include <cstdio> 
 
 void GLPointCloud::initializeGL() {
 
@@ -36,62 +35,60 @@ void GLPointCloud::resizeGL(int w, int h) {
     
 void GLPointCloud::paintGL() {
 
+    if(!ready) return;
+
+    if(!texture) {
+        printf("corrupt texture image! doing nothing..\n");
+        return;
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    printf("drawing points\n");
 
     // get new texture from camera
-    texture = cvQueryFrame(capture); 
     glLoadIdentity();
-    gluLookAt( 0.0,0.0,-2.0,
+    gluLookAt( 0.0,0.0,2.0,
                0.0,0.0,0.0,
                0.0,1.0,0.0);
 
-//    glTranslatef( -0.2,-0.5,0.0);
-//    glRotatef(angle,1.0f,0.0f,0.0f);
-//    glTranslatef( 0.2,0.5,0.0);
-
+    
+    glRotatef(180.f,0.f,0.f,1.f);
+    glRotatef(anglex,0,1,0);
+    glRotatef(angley,1,0,0);
 
     float x,y,z,w,h,dist;
     
-    float centerX = width/2;
-    float centerY = height/2;
+    
+    float centerX = twidth/2;
+    float centerY = theight/2;
+    
+    z = 0.f;
     w = 1.0f;
-    h = height/(float)width;
+    h = theight/(float)twidth;
 
-    glRotatef(180.f,0.f,0.f,1.f);
-    glRotatef(angle,0.f,1.f,0.f);
+    //glRotatef(180.f,0.f,0.f,1.f);
+    //glRotatef(angle,0.f,1.f,0.f);
     glTranslatef(-w/2,-h/2,0.f);
     uchar * texturePtr = (uchar*) texture->imageData;
 
     uchar cr,cb,cg;
 
-    z = 0.0f;
-    // sinwave
-    float alpha    = w/20;
-    float period   = 1.0f/(nwaves);
-    float omega   = 2*M_PI/period;
-
     glPointSize(1.5);
     glBegin(GL_POINTS);
 
-    for(int i=0;i<height;i+=render_detail)
-        for(int j=0;j<width;j+=render_detail) {
+    for(int i=0;i<theight;i+=render_detail)
+        for(int j=0;j<twidth;j+=render_detail) {
             
-            x = pad+(float)j/width;
-            y = pad+(float)i/width;
-
-            dist = sqrt(pow(x-(w/2),2)+pow(y-(h/2),2));
-            z = exp(-2*dist)*cos(omega*sqrt(pow(x-(w/2),2)+pow(y-(h/2),2))+phi)*alpha;
-            if(x==centerX && y == centerY) {
-                printf("z=%.2f\n",z);
-            }
+            x = (float)j/twidth;
+            y = (float)i/twidth;
+            z = zmatrix[i*twidth+j]/twidth;
 
             cb = (uchar)texturePtr[i*step+j*3];
             cg = (uchar)texturePtr[i*step+j*3+1];
             cr = (uchar)texturePtr[i*step+j*3+2];
 
-//            printf("color = (%d,%d,%d)\n",cr,cg,cb);
-            glColor4ub(cr,cg,cb,0);
+            glColor4ub(cr,cg,cb,50);
 
             // draw vertex
             glVertex3f(x,y,z);
@@ -99,8 +96,5 @@ void GLPointCloud::paintGL() {
         }
 
     glEnd();
-
-    angle+=2.f;
-    phi+=0.5f;
 }
 

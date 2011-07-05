@@ -36,7 +36,7 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
 
         
     // initilize matrices
-    noiseThreshold = 0.01;
+    noiseThreshold = 0.1;
     zscale = 130;
     zskew = 24;
 
@@ -45,10 +45,6 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
 
     cout << "width: " << width << "\nheight: " << height << endl;
     cout << "size " << size << endl;
-
-    cvShowImage("phase1", imgPhase1);
-    cvWaitKey(1000);
-
 }
 
 // dtor
@@ -137,17 +133,19 @@ void ThreeStepPhaseShift::phaseDecode()
 }
 
 void ThreeStepPhaseShift::computeDepth () {
-    float* ptrWrappedPhase = (float *)imgWrappedPhase->imageData;
+    float* ptrUnwrappedPhase = (float *)imgUnwrappedPhase->imageData;
     
     for(int i = 0; i<height; i++) {
         float planephase = 0.5 - (i - (height/2))/zskew;
         for(int j=0; j<width; j++) {
             int ii = i*step+j;
-            if(mask[ii]) {
-                depth[ii] = (ptrWrappedPhase[ii] - planephase) * zscale;
+            if(!mask[ii]) {
+                depth[ii] = (ptrUnwrappedPhase[ii] - planephase) * zscale;
             }
         }
     }
+
+    cout << "Computed zmatrix" << endl;
 }
 
 
@@ -180,8 +178,6 @@ void ThreeStepPhaseShift::phaseUnwrap()
     uchar* ptrPhase2 = (uchar *)imgPhase2->imageData;
     uchar* ptrPhase3 = (uchar *)imgPhase3->imageData;
 
-    cvNamedWindow("unwrapping");
-    
     cvCopy(imgWrappedPhase, imgUnwrappedPhase);
     float* ptrUnwrappedPhase = (float *)imgUnwrappedPhase->imageData;
 

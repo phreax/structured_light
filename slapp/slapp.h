@@ -2,13 +2,14 @@
 #define SLAPP_H
 
 #include <QMainWindow>
+#include <iostream> 
 #include "ui_slapp.h"
 #include "../three_step_phase_shift.h"
 
+using namespace std;
 namespace Ui {
     class SLApp;
 }
-
 class SLApp : public QMainWindow
 {
     Q_OBJECT
@@ -43,6 +44,18 @@ public slots:
     void updateDecoder() {
         if(decoder)
             decoder->compute();
+
+        // update visualization
+        
+        
+        cout << "set zmatrix" <<endl;
+        ui->pointcloud->setZMatrix(decoder->getDepth());
+        cout << "set texture" <<endl;
+        IplImage *imgColor = decoder->getColorImage();
+
+        ui->pointcloud->setTexture(imgColor);
+        cout << "update pointcloud" <<endl;
+        ui->pointcloud->updateGL();
     }
 
 private:
