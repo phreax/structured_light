@@ -18,45 +18,15 @@ public:
     explicit SLApp(QWidget *parent = 0);
     ~SLApp();
 
-signals:
-
 
 public slots:
 
-    void setThreshold(int value) {
-        float threshold = value * 1e-2f;
-        QString label;
-        label.setNum(threshold,'f',2);
-        ui->thresholdValue->setText(label);
-        decoder->setNoiseThreshold(threshold);
-    }
-
-    void setZscale(int value) {
-        ui->zscaleValue->setNum(value);
-        decoder->setZscale(value);
-    }
-
-    void setZskew(int value) {
-        ui->zskewValue->setNum(value);
-        decoder->setZskew(value);
-    }
-    
-    void updateDecoder() {
-        if(decoder)
-            decoder->compute();
-
-        // update visualization
-        
-        
-        cout << "set zmatrix" <<endl;
-        ui->pointcloud->setZMatrix(decoder->getDepth());
-        cout << "set texture" <<endl;
-        IplImage *imgColor = decoder->getColorImage();
-
-        ui->pointcloud->setTexture(imgColor);
-        cout << "update pointcloud" <<endl;
-        ui->pointcloud->updateGL();
-    }
+    void setThreshold(int value);
+    void setZscale(int value);
+    void setZskew(int value);
+    void updateDecoder();
+    void updateZMatrix();// only recompute zmatrix
+    void updatePointCloud();
 
 private:
 

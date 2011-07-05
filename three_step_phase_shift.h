@@ -14,17 +14,17 @@ struct UnwrapPath {
     int x;
     int y;
     float phi;    // last phase 
-    float dist;   // phase distance
+    float q;      // phase quality 
 
     UnwrapPath(int x, int y, float phi):
         x(x),y(y),phi(phi)
     {}
 
-    UnwrapPath(int x, int y, float phi, float dist):
-        x(x),y(y),phi(phi), dist(dist)
+    UnwrapPath(int x, int y, float phi, float q):
+        x(x),y(y),phi(phi), q(q)
     {}
     
-    bool operator<(const UnwrapPath & p) const {return dist<p.dist;}
+    bool operator<(const UnwrapPath & path) const {return q<path.q;}
 
 };
 
@@ -42,6 +42,8 @@ public:
  
     void phaseDecode();
     void phaseUnwrap();
+    void computeDepth ();
+    
     void compute() {
         phaseDecode();
         phaseUnwrap();
@@ -69,8 +71,7 @@ protected:
     void phaseUnwrap(int x, int y, float phi );
     void phaseUnwrap(int x, int y, float phi, float dist );
     
-    void computeDepth ();
-    void computeDist();
+    void computeQuality();
 
     // inline helper functions
     float max_phase(float v1, float v2, float v3) {
@@ -112,7 +113,7 @@ private:
     // processing state (each from the same dimension as the input image)
     bool  *mask;
     bool  *process;
-    float *distance;
+    float *quality;
     float *range;
     float *depth;
     float noiseThreshold;
