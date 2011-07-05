@@ -241,7 +241,7 @@ void ThreeStepPhaseShift::computeDist() {
                            sqdist(phi,ptrPhase[ii-1])+
                            sqdist(phi,ptrPhase[ii+step])+
                            sqdist(phi,ptrPhase[ii-step]);
-            distance[ii] /= range[ii];
+            //distance[ii] /= range[ii];
         }
     }
 }
