@@ -10,7 +10,7 @@ alpha = 2*pi/3 # phase shift 120 degree
 
 pattern_dir = "./pattern"
 
-def genFringeVert():
+def genFringe(height,width):
 
     fringe1 = zeros((height,width))
     fringe2 = zeros((height,width))
@@ -22,7 +22,7 @@ def genFringeVert():
     # scale factor delta = 2pi/phi
     delta = 2*pi/phi
 
-    f = lambda x,a : (sin(x*delta+a) +1)* 0.5
+    f = lambda x,a : (cos(x*delta+a) +1)* 128
     
     # compute a row of fringe pattern
     sinrow1 = [f(x,-alpha) for x in xrange(width)]
@@ -34,6 +34,13 @@ def genFringeVert():
     fringe3[:,:] = sinrow3
 
     return fringe1,fringe2,fringe3
+
+def genFringeVert():
+    return genFringe(height,width)
+
+def genFringeHor():
+    f1,f2,f3 = genFringe(height,width)
+    return transpose(f1),transpose(f2),transpose(f3)
 
 def arr2ipl(arr,imgtype=cv.IPL_DEPTH_8U):
 
@@ -54,16 +61,9 @@ if __name__ == "__main__":
         cv.SaveImage("%s/fringe%d.png"%(pattern_dir,i),img)
         i += 1
 
-    cv.WaitKey(0)
-
-
-
-
-
-
-
-    
-
-
+    while True:
+        k = cv.WaitKey(0)
+        if k=='q':
+            break
 
 
