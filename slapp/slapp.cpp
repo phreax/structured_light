@@ -1,12 +1,12 @@
 #include "slapp.h"
 #include <QObject>
 
-SLApp::SLApp(QWidget *parent) :
+SLApp::SLApp(QWidget *parent, const char* img1, const char* img2, const char*img3) :
     QMainWindow(parent),
     ui(new Ui::SLApp), decoder(0)
 {
     ui->setupUi(this);
-    setupDecoder();
+    setupDecoder(img1,img2,img3);
 
     // connect slider
     QObject::connect(ui->thresholdSlider,SIGNAL(valueChanged(int)),this,SLOT(setThreshold(int)));
@@ -18,15 +18,14 @@ SLApp::SLApp(QWidget *parent) :
     QObject::connect(ui->zscaleSlider,SIGNAL(sliderReleased()),this,SLOT(updateZMatrix()));
 
     updateDecoder();
-
 }
 
-void SLApp::setupDecoder() {
+void SLApp::setupDecoder(const char* img1, const char* img2, const char*img3) {
 
-    if(!decoder) {
-        IplImage *phase1 = cvLoadImage("../img/phase1.jpg");
-        IplImage *phase2 = cvLoadImage("../img/phase2.jpg");
-        IplImage *phase3 = cvLoadImage("../img/phase3.jpg");
+    if(!decoder&&img1&&img2&&img3) {
+        IplImage *phase1 = cvLoadImage(img1);
+        IplImage *phase2 = cvLoadImage(img2);
+        IplImage *phase3 = cvLoadImage(img3);
 
         // setup phase decoder
         decoder = new ThreeStepPhaseShift(phase1,phase2,phase3);
@@ -71,10 +70,10 @@ void SLApp::updateDecoder() {
 // only recompute zmatrix
 void SLApp::updateZMatrix() {
 
-    if(decoder)
+    if(decoder) { 
         decoder->computeDepth();
-
-    updatePointCloud();
+        updatePointCloud();
+    }
 }
 
 void SLApp::updatePointCloud() {

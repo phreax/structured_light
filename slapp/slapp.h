@@ -15,9 +15,8 @@ class SLApp : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit SLApp(QWidget *parent = 0);
+    explicit SLApp(QWidget *parent = 0, const char* img1=0, const char* img2=0, const char*img3=0);
     ~SLApp();
-
 
 public slots:
 
@@ -30,7 +29,7 @@ public slots:
 
 private:
 
-    void setupDecoder();
+    void setupDecoder(const char* img1, const char* img2, const char*img3);
 
     Ui::SLApp *ui;
     ThreeStepPhaseShift *decoder;
