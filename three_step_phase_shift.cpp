@@ -198,11 +198,11 @@ void ThreeStepPhaseShift::phaseUnwrap()
         float d = current.dist;
 
 
-        if(i>20) {
+        /*if(i>20) {
             cvShowImage("unwrapping",imgUnwrappedPhase);
             cvWaitKey(1);
             i=0;
-        }
+        }*/
             
         i++;
         if(process[y*step+x]) {
