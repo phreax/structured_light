@@ -81,9 +81,9 @@ protected:
     }
 
     float min_phase(float v1, float v2, float v3) {
-        float max = v1<v2 ? v1 : v2;
-        max = max<v1 ? max : v3;
-        return max;
+        float min = v1<v2 ? v1 : v2;
+        min = min<v3 ? min : v3;
+        return min;
     }
 
     /* use mean as luminance of an rgb triple */
