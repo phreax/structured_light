@@ -237,11 +237,17 @@ void ThreeStepPhaseShift::computeDist() {
         for(int j=1;j<width-1;j++) {
             int ii = i*step+j;
             float phi = ptrPhase[ii];
-            distance[ii] = sqdist(phi,ptrPhase[ii+1])+
-                           sqdist(phi,ptrPhase[ii-1])+
-                           sqdist(phi,ptrPhase[ii+step])+
-                           sqdist(phi,ptrPhase[ii-step]);
-            //distance[ii] /= range[ii];
+            distance[ii] = wdiff(phi,ptrPhase[ii+1])+
+                       wdiff(phi,ptrPhase[ii-1])+
+                       wdiff(phi,ptrPhase[ii+step])+
+                       wdiff(phi,ptrPhase[ii-step]);
+            distance[ii] /= range[ii];
+
+            /*distance[ii] = max4(wdiff(phi,ptrPhase[ii+1]),
+                       wdiff(phi,ptrPhase[ii-1]),
+                       wdiff(phi,ptrPhase[ii+step]),
+                       wdiff(phi,ptrPhase[ii-step]));
+ */
         }
     }
 }
