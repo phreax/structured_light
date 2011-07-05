@@ -1,6 +1,8 @@
 #include "three_step_phase_shift.h"
 #include <cstdio>
 
+#define SQ(x) ((x)*(x))
+
 ThreeStepPhaseShift::ThreeStepPhaseShift(
           IplImage *imgPhase1
         , IplImage *imgPhase2
@@ -36,7 +38,7 @@ ThreeStepPhaseShift::ThreeStepPhaseShift(
 
         
     // initilize matrices
-    noiseThreshold = 0.01;
+    noiseThreshold = 0.2;
     zscale = 130;
     zskew = 24;
 
@@ -117,8 +119,10 @@ void ThreeStepPhaseShift::phaseDecode()
 
             // compute phase quality, try to filter background pixel
             // i.e. where the phase range is too low
-            noise = phiRange / phiSum;
-            mask[ii] = (noise < noiseThreshold);
+            //noise = phiRange / phiSum;
+            float q = sqrt(3*SQ(phi1-phi3)+SQ(2*phi2-phi1-phi3))/phiSum;
+            //mask[ii] = (noise < noiseThreshold);
+            mask[ii] = (q < noiseThreshold);
             process[ii] = !mask[ii];
             range[ii] = phiRange;
             
@@ -198,11 +202,11 @@ void ThreeStepPhaseShift::phaseUnwrap()
         float d = current.dist;
 
 
-        if(i>20) {
+        /*if(i>20) {
             cvShowImage("unwrapping",imgUnwrappedPhase);
             cvWaitKey(1);
             i=0;
-        }
+        }*/
             
         i++;
         if(process[y*step+x]) {
