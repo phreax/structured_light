@@ -15,8 +15,11 @@ INCLUDEPATH += ../ /usr/include/opencv  /usr/include
 SOURCES += main.cpp\
         slapp.cpp\
         ../three_step_phase_shift.cpp\
-        glpointcloud.cpp
+        glpointcloud.cpp \
+    capturedialog.cpp
 
-HEADERS  += slapp.h glpointcloud.h
+HEADERS  += slapp.h glpointcloud.h \
+    capturedialog.h
 
-FORMS    += slapp.ui
+FORMS    += slapp.ui \
+    capturedialog.ui

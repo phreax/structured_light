@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <iostream> 
 #include "ui_slapp.h"
+#include "capturedialog.h"
 #include "../three_step_phase_shift.h"
 
 using namespace std;
@@ -26,6 +27,8 @@ public slots:
     void updateDecoder();
     void updateZMatrix();// only recompute zmatrix
     void updatePointCloud();
+
+    void newCapture();
 
 private:
 

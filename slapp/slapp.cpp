@@ -17,6 +17,8 @@ SLApp::SLApp(QWidget *parent, const char* img1, const char* img2, const char*img
     QObject::connect(ui->zskewSlider,SIGNAL(sliderReleased()),this,SLOT(updateZMatrix()));
     QObject::connect(ui->zscaleSlider,SIGNAL(sliderReleased()),this,SLOT(updateZMatrix()));
 
+
+    connect(ui->captureAct, SIGNAL(triggered()), this, SLOT(newCapture()));
     updateDecoder();
 }
 
@@ -85,6 +87,16 @@ void SLApp::updatePointCloud() {
     ui->pointcloud->setTexture(imgColor);
     ui->pointcloud->setMask(decoder->getMask());
     ui->pointcloud->updateGL();
+}
+
+void SLApp::newCapture() {
+
+    CaptureDialog *cdlg = new CaptureDialog(this);
+    QList<IplImage *>* images = cdlg->getImages();
+
+    if(!images) {
+        cout << "No images captured" << endl;
+    }
 }
 
 SLApp::~SLApp()
