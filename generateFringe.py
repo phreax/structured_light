@@ -1,33 +1,35 @@
+#!/usr/bin/python
+
 import cv
 from numpy import *
 import sys
 
-width  = 800
-height = 600
+width  = 1024 
+height = 768
 
-nstripes = 1
+nstripes = 30
 alpha = 2*pi/3 # phase shift 120 degree
 
 pattern_dir = "./pattern"
 
-def genFringe(height,width):
+def genFringe(h,w):
 
-    fringe1 = zeros((height,width))
-    fringe2 = zeros((height,width))
-    fringe3 = zeros((height,width))
+    fringe1 = zeros((h,w))
+    fringe2 = zeros((h,w))
+    fringe3 = zeros((h,w))
 
     # periodlength:
-    phi = width/nstripes
+    phi = w/nstripes
     
     # scale factor delta = 2pi/phi
     delta = 2*pi/phi
 
-    f = lambda x,a : (cos(x*delta+a) +1)* 128
+    f = lambda x,a : (sin(x*delta+a) +1)* 120
     
     # compute a row of fringe pattern
-    sinrow1 = [f(x,-alpha) for x in xrange(width)]
-    sinrow2 = [f(x,0) for x in xrange(width)]
-    sinrow3 = [f(x,alpha) for x in xrange(width)]
+    sinrow1 = [f(x,-alpha) for x in xrange(w)]
+    sinrow2 = [f(x,0) for x in xrange(w)]
+    sinrow3 = [f(x,alpha) for x in xrange(w)]
     
     fringe1[:,:] = sinrow1
     fringe2[:,:] = sinrow2
@@ -36,24 +38,31 @@ def genFringe(height,width):
     return fringe1,fringe2,fringe3
 
 def genFringeVert():
-    return genFringe(height,width)
+    return map(arr2ipl,genFringe(height,width))
 
 def genFringeHor():
-    f1,f2,f3 = genFringe(height,width)
-    return transpose(f1),transpose(f2),transpose(f3)
+    imgarr = genFringe(width,height)
+    return map(rotate,map(arr2ipl,imgarr))
 
 def arr2ipl(arr,imgtype=cv.IPL_DEPTH_8U):
 
-    img = cv.CreateImage(arr.shape[1],arr.shape[2],imgtype,1)
-    img.SetData(arr,cv.CV_AUTOSTEP)
+    img = cv.CreateImageHeader((arr.shape[1],arr.shape[0]),imgtype,1)
+    a = array(arr,uint8)
+    cv.SetData(img,a.tostring(),a.dtype.itemsize*a.shape[1])
 
     return img
+
+def rotate(img):
+    timg = cv.CreateImage((img.height,img.width), img.depth, img.channels)
+    cv.Transpose(img,timg)
+    cv.Flip(timg,timg,flipMode=1)
+    return timg
 
 if __name__ == "__main__":
 
     nstripes = int(sys.argv[1])
 
-    images = genFringeVert()
+    images = genFringeHor()
 
     i=1
     for img in images:
