@@ -28,7 +28,7 @@ CaptureDialog::CaptureDialog(QWidget *parent) :
     connect(ui->grabButton, SIGNAL(clicked()), this, SLOT(grabImage()));
 
     // initialize capture
-    m_capture = cvCreateCameraCapture(0);
+    m_capture = cvCreateCameraCapture(1);
     if(m_capture) {
         // grab first frame to 
         m_frame = cvQueryFrame(m_capture);
@@ -82,14 +82,8 @@ void CaptureDialog::refreshFrame() {
 
     if(m_frame) {
        QCoreApplication::processEvents();
-       QImage *qframe = fromIplImage(m_frame);
-       QPixmap pixmap;
-       pixmap.convertFromImage(*qframe);
-       
-       // set label
-       ui->camImage->setPixmap(pixmap.scaled(m_width,m_height));
+       setPixmap(ui->camImage,m_frame,m_width,m_height);
        QCoreApplication::processEvents();
-       delete qframe;
     }
 }
 
@@ -157,4 +151,5 @@ void CaptureDialog::updateState() {
 CaptureDialog::~CaptureDialog()
 {
     delete ui;
+    cvReleaseCapture(&m_capture);
 }

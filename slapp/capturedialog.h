@@ -62,7 +62,7 @@ protected:
         int w = image->width;
         int h = image->height;
         QImage *qimage = new QImage((uchar *)image->imageData,w,h,QImage::Format_RGB888);
-        qimage->rgbSwapped();
+                    
         return qimage;
 
     }
@@ -81,7 +81,11 @@ protected:
 
         QImage *qimage = fromIplImage(image);
         QPixmap pixmap;
+        #if QT_VERSION < 0x040700
+        pixmap = QPixmap::fromImage(qimage->rgbSwapped());
+        #else
         pixmap.convertFromImage(*qimage);
+        #endif
        
         // set label
         label->setPixmap(pixmap.scaled(w,h));

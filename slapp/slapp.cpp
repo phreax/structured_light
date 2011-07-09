@@ -1,9 +1,12 @@
 #include "slapp.h"
 #include <QObject>
+#include <QDateTime>
+#include <QFile>
+#include <QTextStream>
 
 SLApp::SLApp(QWidget *parent, const char* img1, const char* img2, const char*img3) :
     QMainWindow(parent),
-    ui(new Ui::SLApp), decoder(0)
+    ui(new Ui::SLApp), decoder(0), m_timestamp(0)
 {
     ui->setupUi(this);
     setupDecoder(img1,img2,img3);
@@ -19,8 +22,29 @@ SLApp::SLApp(QWidget *parent, const char* img1, const char* img2, const char*img
 
 
     connect(ui->captureAct, SIGNAL(triggered()), this, SLOT(newCapture()));
-    updateDecoder();
 }
+
+void SLApp::setupDecoder(QList<IplImage *> *images) {
+    if(images) {
+        // delete old decoder, if any
+        if(decoder) delete decoder;
+        decoder = new ThreeStepPhaseShift(images->at(0),images->at(1),images->at(2));
+        
+        // save images stamped with time
+        QDateTime current = QDateTime::currentDateTime();
+        if(m_timestamp) delete m_timestamp;
+        m_timestamp = new QString(current.toString(Qt::ISODate));
+        QString f1 = "../img/img"+*m_timestamp+"-1.jpg";
+        QString f2 = "../img/img"+*m_timestamp+"-2.jpg";
+        QString f3 = "../img/img"+*m_timestamp+"-3.jpg";
+        cvSaveImage(f1.toStdString().c_str(), images->at(0));
+        cvSaveImage(f2.toStdString().c_str(), images->at(1));
+        cvSaveImage(f3.toStdString().c_str(), images->at(2));
+        
+        updateDecoder();
+    }
+}
+
 
 void SLApp::setupDecoder(const char* img1, const char* img2, const char*img3) {
 
@@ -41,6 +65,7 @@ void SLApp::setupDecoder(const char* img1, const char* img2, const char*img3) {
     ui->thresholdSlider->setValue(10);
     ui->zscaleSlider->setValue(120);
     ui->zskewSlider->setValue(26);
+    updateDecoder();
 }
 
 void SLApp::setThreshold(int value) {
@@ -64,6 +89,23 @@ void SLApp::setZskew(int value) {
 void SLApp::updateDecoder() {
     if(decoder)
         decoder->compute();
+    
+    if(m_timestamp) {
+        // save parameters
+        QString f1 = "../img/img"+*m_timestamp+"-1.jpg";
+        QString f2 = "../img/img"+*m_timestamp+"-2.jpg";
+        QString f3 = "../img/img"+*m_timestamp+"-3.jpg";
+
+        QString parameters = "../img/img"+*m_timestamp+"parameters.txt";
+        QFile file(parameters);
+        file.open(QIODevice::WriteOnly | QIODevice::Text);
+        QTextStream out(&file);
+        out << f1 << endl << f2 << endl << f3 << endl;
+        out << decoder->getNoiseThreshold() << endl;
+        out << decoder->getZscale() << endl;
+        out << decoder->getZskew() << endl;
+        file.close();
+    }
 
     updatePointCloud();
     
@@ -91,12 +133,15 @@ void SLApp::updatePointCloud() {
 
 void SLApp::newCapture() {
 
-    CaptureDialog *cdlg = new CaptureDialog(this);
-    QList<IplImage *>* images = cdlg->getImages();
+    CaptureDialog cdlg(this);
+    QList<IplImage *>* images = cdlg.getImages();
 
-    if(!images) {
-        cout << "No images captured" << endl;
+    if(images) {
+        setupDecoder(images);
     }
+    else
+        cout << "No images captured" << endl;
+
 }
 
 SLApp::~SLApp()
