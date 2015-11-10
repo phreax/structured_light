@@ -28,7 +28,7 @@ CaptureDialog::CaptureDialog(QWidget *parent) :
     connect(ui->grabButton, SIGNAL(clicked()), this, SLOT(grabImage()));
 
     // initialize capture
-    m_capture = cvCreateCameraCapture(1);
+    m_capture = cvCreateCameraCapture(0);
     if(m_capture) {
         // grab first frame to 
         m_frame = cvQueryFrame(m_capture);

@@ -2,8 +2,8 @@
 
 void GLPointCloud::initializeGL() {
 
-    glEnable(GL_POINT_SMOOTH|GL_COLOR_MATERIAL);
-    //glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_LIGHTING|GL_POINT_SMOOTH|GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
     setAutoBufferSwap(true);
 }
 
