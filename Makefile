@@ -1,12 +1,12 @@
 INCPATH = -I/usr/include/opencv 
-LIBPATH = -L/usr/lib
+LIBPATH = -L/usr/lib -L/usr/local/lib
 CFLAGS  = -O2 -g
-LDFLAGS = -Wl,--rpath -Wl,/usr/lib -Wno-write-strings -lcv -lcvaux -lcxcore -lm -lhighgui -lm -lstdc++  -lGL -lglut -lm -lGLU
+LDFLAGS = -Wl,--rpath -Wl,/usr/lib -Wno-write-strings  -lstdc++  -lGL -lglut -lm -lGLU
 RM 		= /bin/rm -f
 CC		= colorgcc 
-SOURCES = three_step_phase_shift.cpp ThreeStepTest.cpp
+SOURCES = three_step_phase_shift.cpp three_step_phase_shift.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-MAIN	= tsptest
+MAIN	= tpstest
 
 all: $(MAIN) 
 
@@ -14,10 +14,7 @@ all: $(MAIN)
 $(MAIN): $(OBJECTS)
 	$(CC) $(INCPATH) $(LIBPATH) $(LDFLAGS) $(CFLAGS) $^ -o $@
 
-camTest: camTest.cpp 
-	$(CC) $(INCPATH) $(LIBPATH) $(LDFLAGS) $(CFLAGS) $^ -o $@
-
-glutExample: glutExample.cpp 
+cam_test: cam_test.cpp 
 	$(CC) $(INCPATH) $(LIBPATH) $(LDFLAGS) $(CFLAGS) $^ -o $@
 
 point_cloud: point_cloud.cpp 

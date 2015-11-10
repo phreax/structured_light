@@ -102,12 +102,12 @@ int main(int argc, const char *argv[])
     IplImage* wrappedPhase = decoder.getWrappedPhase();
     //IplImage* imgColor = decoder.getColorImage();
     printMinMax(wrappedPhase);
-    //cvScale(wrappedPhase, wrappedPhase, 1, 0.5); 
+    cvScale(wrappedPhase, wrappedPhase, 1, 0.5); 
     
     decoder.compute();
     
     IplImage* unwrappedPhase = decoder.getUnwrappedPhase();
-    //scale(unwrappedPhase);
+    scale(unwrappedPhase);
     //printMinMax(unwrappedPhase);
     
     IplImage *imgDepth = cvCreateImageHeader(cvGetSize(unwrappedPhase),IPL_DEPTH_32F,1);
@@ -117,9 +117,9 @@ int main(int argc, const char *argv[])
     //printMinMax(unwrappedPhase);
 
     cvShowImage("depth",imgDepth);
-    //cvShowImage("wrapped phase",wrappedPhase);
-    //cvShowImage("unwrapped phase",unwrappedPhase);
-    //cvShowImage("mask",boolarr2img(decoder.getMask(),cvGetSize(wrappedPhase)));
+    cvShowImage("wrapped phase",wrappedPhase);
+    cvShowImage("unwrapped phase",unwrappedPhase);
+    cvShowImage("mask",boolarr2img(decoder.getMask(),cvGetSize(wrappedPhase)));
     
     cvWaitKey(0);
 
